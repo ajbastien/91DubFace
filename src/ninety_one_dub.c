@@ -158,8 +158,11 @@ static void update_display(struct tm *current_time) {
  
   //Get info, copy to long-lived buffer and display
   BatteryChargeState state = battery_state_service_peek();
-  static char buffer[] = "100%";
-  snprintf(buffer, sizeof("100%"), "%d%%", state.charge_percent);
+  static char buffer[] = "Full";
+  if (state.charge_percent < 100) {
+	snprintf(buffer, sizeof("100%"), "%d%%", state.charge_percent);
+  }
+	
   text_layer_set_text(batt_layer, buffer);
   
   //send_int(BATTERY_DATA, state.charge_percent);
