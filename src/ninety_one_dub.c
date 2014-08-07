@@ -12,7 +12,7 @@ static BitmapLayer *meter_bar_layer;
 static GBitmap *time_format_image;
 static BitmapLayer *time_format_layer;
 static TextLayer *batt_layer;
-
+static char buffer[5];
 
 const int DAY_NAME_IMAGE_RESOURCE_IDS[] = {
   RESOURCE_ID_IMAGE_DAY_NAME_SUN,
@@ -158,9 +158,14 @@ static void update_display(struct tm *current_time) {
  
   //Get info, copy to long-lived buffer and display
   BatteryChargeState state = battery_state_service_peek();
-  static char buffer[] = "Full";
+  snprintf(buffer, 5, "Full");
   if (state.charge_percent < 100) {
-	snprintf(buffer, sizeof("100%"), "%d%%", state.charge_percent);
+    if (state.is_plugged) {
+      snprintf(buffer, 5, "CHG");
+    } else {
+      snprintf(buffer, 5, "%d%%", state.charge_percent);
+    }
+	  
   }
 	
   text_layer_set_text(batt_layer, buffer);
