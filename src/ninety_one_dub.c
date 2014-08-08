@@ -13,6 +13,7 @@ static GBitmap *time_format_image;
 static BitmapLayer *time_format_layer;
 static TextLayer *batt_layer;
 static char buffer[5];
+static uint8_t lastBattery = 0;
 
 const int DAY_NAME_IMAGE_RESOURCE_IDS[] = {
   RESOURCE_ID_IMAGE_DAY_NAME_SUN,
@@ -170,7 +171,11 @@ static void update_display(struct tm *current_time) {
 	
   text_layer_set_text(batt_layer, buffer);
   
-  send_int(BATTERY_DATA, state.charge_percent);
+  if (lastBattery != state.charge_percent) {
+    send_int(BATTERY_DATA, state.charge_percent);
+    lastBattery = state.charge_percent;
+  }
+  
 
 }
 
