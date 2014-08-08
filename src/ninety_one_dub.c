@@ -171,6 +171,9 @@ static void update_display(struct tm *current_time) {
 	
   text_layer_set_text(batt_layer, buffer);
   
+  if (lastBattery == 0) {
+    lastBattery = state.charge_percent;
+  }
   if (lastBattery != state.charge_percent) {
     send_int(BATTERY_DATA, state.charge_percent);
     lastBattery = state.charge_percent;
