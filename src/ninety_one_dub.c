@@ -42,7 +42,7 @@ const int DATENUM_IMAGE_RESOURCE_IDS[] = {
 };
 
 enum {
-    BATTERY_DATA = 0,
+    BATTERY_DATA = 0
 };
 
 #define TOTAL_DATE_DIGITS 2
@@ -170,7 +170,7 @@ static void update_display(struct tm *current_time) {
 	
   text_layer_set_text(batt_layer, buffer);
   
-  //send_int(BATTERY_DATA, state.charge_percent);
+  send_int(BATTERY_DATA, state.charge_percent);
 
 }
 
@@ -237,6 +237,10 @@ static void init(void) {
     layer_add_child(window_layer, bitmap_layer_get_layer(date_digits_layers[i]));
   }
 
+  //Register AppMessage events
+  app_message_register_inbox_received(in_received_handler);           
+  app_message_open(256, 256);    //Medium input and output buffer sizes
+  
   // Avoids a blank screen on watch start.
   time_t now = time(NULL);
   struct tm *tick_time = localtime(&now);
@@ -244,10 +248,6 @@ static void init(void) {
   update_display(tick_time);
 
   tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
-  
-  //Register AppMessage events
-  app_message_register_inbox_received(in_received_handler);           
-  app_message_open(32, 32);    //Small input and output buffer sizes
   
   //Subscribe to BluetoothConnectionService
   bluetooth_connection_service_subscribe(bt_handler);
