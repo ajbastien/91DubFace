@@ -83,6 +83,29 @@ void send_int(uint8_t key, uint8_t cmd) {
     app_message_outbox_send();
 }
 
+static void handle_battery(BatteryChargeState state) {
+
+  if (state.is_charging) {
+    snprintf(buffer, 5, "CHG");
+  } else {
+    snprintf(buffer, 5, "Full");
+    if (state.charge_percent < 100) {
+      snprintf(buffer, 5, "%d%%", state.charge_percent);
+    }
+  }
+	
+  text_layer_set_text(batt_layer, buffer);
+  
+  if (lastBattery == 0) {
+    lastBattery = state.charge_percent;
+  }
+  if (lastBattery != state.charge_percent) {
+    send_int(BATTERY_DATA, state.charge_percent);
+    lastBattery = state.charge_percent;
+  }
+
+}
+
 static void set_container_image(GBitmap **bmp_image, BitmapLayer *bmp_layer, const int resource_id, GPoint origin) {
   GBitmap *old_image = *bmp_image;
 
@@ -159,26 +182,7 @@ static void update_display(struct tm *current_time) {
  
   //Get info, copy to long-lived buffer and display
   BatteryChargeState state = battery_state_service_peek();
-  snprintf(buffer, 5, "Full");
-  if (state.charge_percent < 100) {
-    if (state.is_plugged) {
-      snprintf(buffer, 5, "CHG");
-    } else {
-      snprintf(buffer, 5, "%d%%", state.charge_percent);
-    }
-	  
-  }
-	
-  text_layer_set_text(batt_layer, buffer);
-  
-  if (lastBattery == 0) {
-    lastBattery = state.charge_percent;
-  }
-  if (lastBattery != state.charge_percent) {
-    send_int(BATTERY_DATA, state.charge_percent);
-    lastBattery = state.charge_percent;
-  }
-  
+  handle_battery(state);
 
 }
 
@@ -255,15 +259,20 @@ static void init(void) {
 
   update_display(tick_time);
 
-  tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
+  tick_timer_service_subscribe(MINUTE_UNIT, &handle_minute_tick);
   
   //Subscribe to BluetoothConnectionService
-  bluetooth_connection_service_subscribe(bt_handler);
-  
+  bluetooth_connection_service_subscribe(&bt_handler);
+  battery_state_service_subscribe(&handle_battery);
+
 }
 
 
 static void deinit(void) {
+  tick_timer_service_unsubscribe();
+  battery_state_service_unsubscribe();
+  bluetooth_connection_service_unsubscribe();
+
   layer_remove_from_parent(bitmap_layer_get_layer(background_layer));
   bitmap_layer_destroy(background_layer);
   gbitmap_destroy(background_image);
